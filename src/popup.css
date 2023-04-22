@@ -15,8 +15,8 @@ html {
 }
 
 body {
-  width: 350px;
-  height: 300px;
+  width: 600px;
+  height: 580px;
 }
 
 .app {
@@ -29,64 +29,51 @@ body {
   padding: 20px;
 }
 
-.title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 10px;
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
-.subtitle {
-  font-size: 12px;
+
+
+label {
+  font-size: 1.2rem;
+  margin: 1rem;
 }
 
-code {
-  font-size: 12px;
-  font-family: inherit;
-  background-color: rgba(254, 237, 185, 0.3);
-  padding: 2px 4px;
-  border-radius: 2px;
+#username {
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.counter-label {
-  font-size: 12px;
-  margin-bottom: 5px;
+#password {
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.counter {
-  font-size: 36px;
-  font-weight: 700;
-}
-
-.button-container {
-  margin-top: 15px;
-}
-
-.button {
-  border: 0;
-  display: inline-block;
-  padding: 10px 20px;
-  margin-right: 4px;
-  margin-left: 4px;
-  background-color: bisque;
-  font-size: 16px;
+#signin-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #4caf50;
+  color: white;
+  font-size: 1.2rem;
   cursor: pointer;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-  user-select: none;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.button:focus {
-  outline: none;
-}
-
-.button:hover {
-  transform: scale(1.1);
-}
-
-.divider {
-  margin: 30px auto 25px;
-  width: 50px;
-  border: 0.5px dashed #000;
-  opacity: 0.1;
+#signin-button:hover {
+  background-color: #3e8e41;
 }
