@@ -27,11 +27,15 @@ async function extensionSendSpotlight() {
     client.from('article').insert({ digest:articleDigest, source: htmlTagsAsString, title: result.metadata.title, user_id: user.id}).then(({data, error }) => {console.log({data, error})})
 
     console.log(result)
+    return {data:{articleDigest, highlightDigest}, error:null}
   }
   else {
     console.log(client)
     console.log(user)
   }
+
+  return {data:null, error:'error'}
+
 }
 // creation of the context menu, start of the logic
 chrome.runtime.onInstalled.addListener(() => {
@@ -45,19 +49,19 @@ chrome.runtime.onInstalled.addListener(() => {
 //- get the selected text and create a thread
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   extensionSendSpotlight();
+  chrome.tabs.sendMessage(tab.id, { action: 'createSidebar' })
+
+
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'GREETINGS') {
-    const message = `Hi ${
-      sender.tab ? 'Con' : 'Pop'
-    }, my name is Bac. I am from Background. It's great to hear from you.`;
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse)=>{
+  if (message.event==='popup_activated'){
 
-    // Log message coming from the `request` parameter
-    console.log(request.payload.message);
-    // Send a response message
-    sendResponse({
-      message,
-    });
+
+    const {data, error} = await extensionSendSpotlight()
+    chrome.runtime.sendMessage(
+      {event:'popup_activated_response', data, error}
+      )
   }
-});
+}
+)
