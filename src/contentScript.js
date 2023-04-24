@@ -1,4 +1,5 @@
 'use strict';
+import { webURL } from './vars';
 
 // Content script file will run in the context of web page.
 // With content script you can manipulate the web pages using
@@ -157,6 +158,69 @@ function getMetadata(citationDataList) {
     title: citationTitle || webpageTitle || '',
   };
 }
+
+
+function createSidebar() {
+  const sidebar = document.createElement('div');
+  sidebar.id = 'my-sidebar';
+  sidebar.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100%;
+    background-color: #f0f0f0;
+    border-right: 1px solid #ccc;
+    overflow: auto;
+    z-index: 9999;
+    padding: 10px;
+    box-sizing: border-box;
+  `;
+  const webapp = document.createElement('iframe');
+  webapp.src = webURL
+
+  webapp.style.cssText = `
+  width: 100%;
+  height: 100%;
+  border: 0;
+  overflow: hidden;
+`;
+  sidebar.appendChild(webapp)
+
+  document.body.appendChild(sidebar);
+
+
+  const removeSidebar = adjustMainContent(sidebar.offsetWidth);
+
+
+
+}
+
+function adjustMainContent(sidebarWidth) {
+  const originalBodyMarginRight = document.body.style.marginRight || '';
+  document.body.style.marginRight = `${sidebarWidth}px`;
+
+  // Add a cleanup function to remove the sidebar and restore the original margin
+  const removeSidebar = () => {
+    const sidebar = document.getElementById('my-sidebar');
+    if (sidebar) {
+      sidebar.remove();
+      document.body.style.marginRight = originalBodyMarginRight;
+      window.removeEventListener('unload', removeSidebar);
+    }
+  };
+
+  // Remove the sidebar and restore the original margin when the page is unloaded
+  window.addEventListener('unload', removeSidebar);
+  return removeSidebar
+}
+
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'createSidebar') {
+    //createSidebar();
+  }
+});
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
