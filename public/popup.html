@@ -7,8 +7,8 @@
   </head>
 
   <body>
-    <div class="app">
-      <form id="signin-form">
+    <div class="app" id="app">
+      <form id="signin-form" style="display: none;">
         <div class="form-group">
           <label for="username">Username</label>
           <input type="text" id="username" name="username" autocomplete="username" >
@@ -20,7 +20,11 @@
         </div>
         <button type="submit" id="signin-button">Sign In</button>
       </form>
+
+      <iframe id='webapp' style="display: none;"></iframe>
     </div>
+
+
 
     <script src="popup.js"></script>
 

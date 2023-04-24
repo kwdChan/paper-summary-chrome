@@ -26,16 +26,18 @@ body {
   justify-content: center;
   flex-direction: column;
   text-align: center;
-  padding: 20px;
+  padding: 2px;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+#webapp{
+
+  padding: 0;
+  border: none;
+  margin: 0;
+
+
 }
+
 
 
 

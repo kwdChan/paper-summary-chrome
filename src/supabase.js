@@ -4,7 +4,7 @@ export const SUPABASE_API_KEY =
 
 import { createClient } from '@supabase/supabase-js';
 
-const storageWrapper = {
+export const storageWrapper = {
   getItem: async (key) => {
     return  (await chrome.storage.local.get(key))[[key]]
   },
@@ -12,29 +12,19 @@ const storageWrapper = {
   removeItem: async (key) => chrome.storage.local.remove(key),
 };
 
+
 export async function getClient() {
   const client = createClient(SUPABASE_URL, SUPABASE_API_KEY, {
     auth: { storage: storageWrapper },
   });
-  const text = await client.auth.storage.getItem(client.auth.storageKey)
-  console.log(text)
 
 
-  // get session from chrome storage (throw error if not found)
-  //const { session } = await chrome.storage.local.get('session');
-  //console.log(session)
-
-  //const { access_token, refresh_token, user } = session.data.session;
-  //console.log(access_token)
   const {
-    data: { user },
+    data:{user} ,
   } = await client.auth.getUser();
 
-
-  console.log(user);
-
-  console.log(client);
-
+  console.log("getClient:user", user);
+  console.log("getClient:client", client);
   return { client, user };
 
 }
