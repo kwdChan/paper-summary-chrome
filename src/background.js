@@ -9,6 +9,7 @@ import fnv from 'fnv-plus';
 // See https://developer.chrome.com/extensions/background_pages
 
 ///import { mySupabaseClient } from './supabase.js';
+
 async function extensionSendSpotlight() {
   let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   let tabID = tabs[0].id;

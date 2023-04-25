@@ -1,1 +1,1 @@
-export const webURL="http://localhost:3000";
+export const webURL=WEB_URL
