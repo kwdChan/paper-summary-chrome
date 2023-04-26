@@ -2,101 +2,85 @@
 
 import './popup.css';
 import { webURL } from './vars';
-import { getClient } from './supabase.js';
+import { getClient, supabaseClient } from './supabase.js';
+console.log(webURL);
 
 (async function () {
 
-  //
-
-  // ui
-  if (await isSignedIn()){
-    console.log('showIframe')
-
-    await chrome.runtime.sendMessage({event:'popup_activated'})
-
-  } else {
-    console.log('showForm')
-    showForm()
-  }
-
+  await chrome.runtime.sendMessage({event:'popup_activated'})
 
 })();
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse)=>{
-  if (message.event==="popup_activated_response"){
-
-    const {data, error} = message
-    console.log(message)
-
-
-    const query = data? `/${data.articleDigest}?highlight_digest=${data.highlightDigest}`: ''
-    showIframe('/article' + query)
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  const {event, data, error } = message;
+  if (event === 'popup_activated_response') {
+    if (data){
+      const query = `/${data.articleDigest}?highlight_digest=${data.highlightDigest}`
+      console.log('query', query)
+      showIframe('/article' + query);
+    } else if (error=='no user'){
+      showForm();
+    }
+    else{
+      console.log(error)
+      showError(error);
+    }
   }
-})
+});
 
 
-function showIframe(route='/article'){
+function showIframe(route = '/article') {
   // Create a new iframe element
   const webapp = document.getElementById('webapp');
 
   // Set the source URL for the iframe
-  webapp.src = webURL+route;
+  webapp.src = webURL + route;
 
   // Set the width and height of the iframe
   webapp.width = '100%';
   webapp.height = '100%';
 
   // Append the iframe to the container element
-  webapp.style.display = 'block'
-
+  webapp.style.display = 'block';
 }
 
-async function isSignedIn(){
-  const {client, user} = await getClient()
-  console.log('isSignedIn:client', client)
-  console.log('isSignedIn:user', user)
-  return user != null
+
+function showError(text) {
+  //TODO
+  const errorMsg = document.getElementById('error-msg');
+  errorMsg.style.display = 'block';
 }
 
-function showForm(){
 
-
+function showForm() {
   const form = document.getElementById('signin-form');
-  const button = document.getElementById('signin-button');
-  const usernameInput = document.getElementById('username')
-  const passwordInput = document.getElementById('password')
+  //const button = document.getElementById('signin-button');
+  const signupButton = document.getElementById('signup-button');
 
-  form.style.display = 'block'
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
 
+  signupButton.addEventListener('click', () => {
+    form.style.display = 'none';
+    showIframe('/signup');
+  });
+
+  form.style.display = 'block';
 
   form.addEventListener('submit', async (event) => {
-
     event.preventDefault();
 
     const username = usernameInput.value;
     const password = passwordInput.value;
 
+    const {data, error} = await supabaseClient.signIn(username, password)
 
-
-
-    const {client, user} = await getClient()
-    console.log(client)
-    const { data, error } = await client.auth.signInWithPassword({
-      email: username,
-      password: password,
-    })
-    console.log(error)
-
-    if (!error){
-      form.style.display = 'none'
-      showIframe()
+    if (!error) {
+      form.style.display = 'none';
+      showIframe();
     }
 
-    usernameInput.value = ''
-    passwordInput.value = ''
-
+    usernameInput.value = '';
+    passwordInput.value = '';
   });
-
-
-
 }

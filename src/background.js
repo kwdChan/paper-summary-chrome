@@ -1,5 +1,5 @@
 'use strict';
-import {getClient} from './supabase.js';
+import {supabaseClient} from './supabase.js';
 import fnv from 'fnv-plus';
 
 
@@ -11,31 +11,39 @@ import fnv from 'fnv-plus';
 ///import { mySupabaseClient } from './supabase.js';
 
 async function extensionSendSpotlight() {
-  let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  let tabID = tabs[0].id;
-  let result = await chrome.tabs.sendMessage(tabID, { message: 'selection' });
+  let result
+  try{
+    let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    let tabID = tabs[0].id;
+    result = await chrome.tabs.sendMessage(tabID, { message: 'selection' });
 
-  const {client, user} = await getClient()
+  }catch{
+    console.log('extensionSendSpotlight', 'no tab')
+    return {data:null, error:'no tab'}
+  }
 
-  if (user) {
+  // refresh session
+  const {data, error} = await supabaseClient.getRefreshSession()
+
+  if (!data.session){
+    console.log('extensionSendSpotlight', 'no user')
+    return {data:null, error:'no user'}
+  }
+  try{
     const htmlTagsAsString = JSON.stringify(result.contentHTMLTags)
     const articleDigest = fnv.hash(htmlTagsAsString, 64).str()
     const highlightDigest = fnv.hash(result.highlighted, 64).str()
 
-
     // there're unique contraint on article digest and highlight digest and user id on the database
-    client.from('highlight').insert({ article_digest:articleDigest, digest: highlightDigest, text: result.highlighted, user_id: user.id}).then(({data, error }) => {console.log({data, error})})
-    client.from('article').insert({ digest:articleDigest, source: htmlTagsAsString, title: result.metadata.title, user_id: user.id}).then(({data, error }) => {console.log({data, error})})
+    supabaseClient.newHighlight({ article_digest:articleDigest, digest: highlightDigest, text: result.highlighted,})
+    supabaseClient.newArticle({ digest:articleDigest, source: htmlTagsAsString, title: result.metadata.title})
 
-    console.log(result)
     return {data:{articleDigest, highlightDigest}, error:null}
-  }
-  else {
-    console.log(client)
-    console.log(user)
-  }
+  } catch (error){
 
-  return {data:null, error:'error'}
+    console.log('extensionSendSpotlight', error)
+    return {data:null, error:'data error'}
+  }
 
 }
 // creation of the context menu, start of the logic
@@ -55,6 +63,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 });
 
+//TODO: check sender
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse)=>{
   if (message.event==='popup_activated'){
 

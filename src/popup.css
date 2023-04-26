@@ -68,14 +68,24 @@ label {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.2rem;
   background-color: #4caf50;
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
-
+#signup-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #2512d4b4;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
 #signin-button:hover {
   background-color: #3e8e41;
 }

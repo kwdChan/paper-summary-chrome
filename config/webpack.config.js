@@ -18,7 +18,7 @@ const config = (env, argv) =>
     devtool: argv.mode === 'production' ? false : 'source-map',
     plugins: [
       new webpack.DefinePlugin({
-        WEB_URL: (argv.mode === 'production') ? JSON.stringify("http://kawac.ddns.net:23072"): JSON.stringify("http://localhost:3000"),
+        WEB_URL: (argv.mode === 'production') ? JSON.stringify("http://kawac.ddns.net:23073"): JSON.stringify("http://localhost:3000"),
 
       })
     ]
