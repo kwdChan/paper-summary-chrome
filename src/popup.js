@@ -6,14 +6,29 @@ import { getClient, supabaseClient } from './supabase.js';
 console.log(webURL);
 
 (async function () {
-
   await chrome.runtime.sendMessage({event:'popup_activated'})
 
 })();
 
+
+// Add event listener to receive messages from child frames
+window.addEventListener("message", receiveMessage, false);
+
+// Receive message from child frame
+function receiveMessage({origin, data, error}) {
+  if (data.message=='signout'){
+    supabaseClient.signout();
+    hideIframe();
+    showForm();
+  }
+}
+
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const {event, data, error } = message;
+  console.log('popup', event, data, error)
   if (event === 'popup_activated_response') {
+
     if (data){
       const query = `/${data.articleDigest}?highlight_digest=${data.highlightDigest}`
       console.log('query', query)
@@ -28,6 +43,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 });
 
+function hideIframe(){
+  document.getElementById('webapp').style.display = 'none'
+
+}
 
 function showIframe(route = '/article') {
   // Create a new iframe element
@@ -42,6 +61,7 @@ function showIframe(route = '/article') {
 
   // Append the iframe to the container element
   webapp.style.display = 'block';
+
 }
 
 

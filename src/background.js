@@ -9,7 +9,7 @@ import fnv from 'fnv-plus';
 // See https://developer.chrome.com/extensions/background_pages
 
 ///import { mySupabaseClient } from './supabase.js';
-
+import { webURL } from './vars.js';
 async function extensionSendSpotlight() {
   let result
   try{
@@ -28,6 +28,10 @@ async function extensionSendSpotlight() {
   if (!data.session){
     console.log('extensionSendSpotlight', 'no user')
     return {data:null, error:'no user'}
+  }
+  if (error) {
+    return {data:null, error:'cannot refresh session'}
+
   }
   try{
     const htmlTagsAsString = JSON.stringify(result.contentHTMLTags)
@@ -55,13 +59,27 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+
+
 //- get the selected text and create a thread
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  extensionSendSpotlight();
-  chrome.tabs.sendMessage(tab.id, { action: 'createSidebar' })
+  //extensionSendSpotlight();
+
+  //chrome.tabs.sendMessage(tab.id, { action: 'createSidebar' })
+  openNewWindow()
 
 
 });
+
+function openNewWindow() {
+  chrome.windows.create({
+    url: webURL+"/article",
+    type: "popup",
+    width: 500,
+    height: 700
+  });
+}
+
 
 //TODO: check sender
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse)=>{
