@@ -129,7 +129,7 @@ function handleNetworkError(error, status) {
   }
   if (status === 406) {
 
-    managed_window.open(chrome.runtime.getURL(`popup.html?status=${"Cold start issue: please try again"}`));
+    managed_window.open(chrome.runtime.getURL(`popup.html?error=${"Cold start issue: please try again"}`));
     return;
   }
   // 403: row level security error (no auth)
