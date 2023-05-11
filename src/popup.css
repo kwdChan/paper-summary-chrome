@@ -29,10 +29,21 @@ body {
 }
 
 #webapp{
-
   padding: 0;
   border: none;
   margin: 0;
+  display: block;
+}
+
+#error-msg{
+  display: flex;
+  display: none;
+  border: 2px;
+  height: 3vh;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: red;
 
 
 }

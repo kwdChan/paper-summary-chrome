@@ -2,13 +2,67 @@
 import { supabaseClient } from './supabase.js';
 import fnv from 'fnv-plus';
 
-// With background scripts you can communicate with popup
-// and contentScript files.
-// For more information on background script,
-// See https://developer.chrome.com/extensions/background_pages
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'summarise',
+    title: 'Summarise the selected',
+    contexts: ['selection'],
+  });
+});
 
-///import { mySupabaseClient } from './supabase.js';
-import { webURL } from './vars.js';
+chrome.contextMenus.onClicked.addListener(async function (info, tab) {
+  if (info.menuItemId === 'summarise') {
+    await userTriggerCommand_summary()
+  }
+});
+
+chrome.commands.onCommand.addListener(async function (command) {
+  if (command === 'summarise') {
+    await userTriggerCommand_summary()
+  }
+});
+
+
+async function userTriggerCommand_summary(){
+  const { data, error } = await extensionSendSpotlight();
+
+  if (error) {
+    if (error === 'no tab') {
+
+      let errorMsg = "Please reload the page and try again for fresh installations. <br> Note that PDFs and other non-html contents are not yet supported."
+      managed_window.open(chrome.runtime.getURL(`popup.html?error=${errorMsg}`))
+    }
+
+    else if (error === 'no user') {
+
+      let errorMsg = "Extension not logged in. <br> If the page is logged in, try logging out and logging in again."
+
+      // ask to login
+      managed_window.open(chrome.runtime.getURL(`popup.html?error=${errorMsg}`))
+    }
+
+    else if (error === 'cannot refresh session') {
+
+      let errorMsg = "Session expired. <br> If the page is logged in, try logging out and logging in again."
+      // has user but cannot refresh session
+      managed_window.open(chrome.runtime.getURL(`popup.html?error=${errorMsg}`))
+    }
+
+    else if (error === 'parsing error') {
+
+      let errorMsg = "Oops! Something went wrong. Please reload the page. <br> Note that PDFs and other non-html contents are not yet supported."
+
+      // has user but cannot refresh session
+      managed_window.open(chrome.runtime.getURL(`popup.html?error=${error}`))
+    }
+    return;
+  }
+
+  const { articleDigest, highlightDigest } = data;
+  managed_window.open(chrome.runtime.getURL(`popup.html?article_digest=${articleDigest}&highlight_digest=${highlightDigest}`));
+
+}
+
 
 async function extensionSendSpotlight() {
   let result;
@@ -23,7 +77,6 @@ async function extensionSendSpotlight() {
 
   // this return the unexpired session immediately without checking if it's valid
   const { data, error } = await supabaseClient.getRefreshSession();
-  console.log(data);
   if (!data.session) {
     console.log('extensionSendSpotlight', 'no user');
     return { data: null, error: 'no user' };
@@ -31,6 +84,8 @@ async function extensionSendSpotlight() {
   if (error) {
     return { data: null, error: 'cannot refresh session' };
   }
+
+  // sending the spotlight and article to the server
   try {
     const htmlTagsAsString = JSON.stringify(result.contentHTMLTags);
     const articleDigest = fnv.hash(htmlTagsAsString, 64).str();
@@ -43,6 +98,7 @@ async function extensionSendSpotlight() {
       digest: highlightDigest,
       text: result.highlighted,
     });
+
     supabaseClient
       .newArticle({
         digest: articleDigest,
@@ -55,18 +111,27 @@ async function extensionSendSpotlight() {
 
     return { data: { articleDigest, highlightDigest }, error: null };
   } catch (error) {
-    console.log('extensionSendSpotlight', error);
-    return { data: null, error: 'data error' };
+
+    console.log('extensionSendSpotlight: parsing erroring: ', error);
+    return { data: null, error: 'parsing error' };
+
   }
 }
-// creation of the context menu, start of the logic
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: 'jvdnfdi',
-    title: 'Summarise',
-    contexts: ['selection'],
-  });
-});
+
+function handleNetworkError(error, status) {
+  console.log("handleNetworkError", error);
+
+  //this is database replication error, ignore it
+  if (status === 409 && error.code === "23505") {
+    return;
+  }
+
+  // 403: row level security error (no auth)
+  // TODO: send a message to popup.js to show error message
+
+  //managed_window.open(chrome.runtime.getURL(`popup.html?status=${status}`));
+}
+
 
 function focusTheWindow(window) {
   return chrome.windows.update(window.id, { focused: true });
@@ -74,17 +139,6 @@ function focusTheWindow(window) {
 
 function changeURL(window, url) {
   return chrome.tabs.update(window.tabs[0].id, { url: url });
-}
-// TODO: handle the situation where the website is logged in but the extension is not
-// TODO: handle the situation where the website and extension are logged into different accounts
-function tryLogin(){
-
-
-}
-
-function requestLogin(window){
-
-
 }
 
 const managed_window = {
@@ -110,50 +164,3 @@ const managed_window = {
   },
 };
 
-chrome.commands.onCommand.addListener(async function (command) {
-  if (command === 'summarise') {
-
-    console.log(command)
-    const { data, error } = await extensionSendSpotlight();
-
-    if (error) {
-      console.log(error)
-      ;
-      //TODO
-      managed_window.open(chrome.runtime.getURL(`popup.html?error=${error}`));
-    } else {
-
-      const { articleDigest, highlightDigest } = data;
-      console.log(data)
-      managed_window.open(chrome.runtime.getURL(`popup.html?article_digest=${articleDigest}&highlight_digest=${highlightDigest}`));
-
-    }
-  }
-});
-
-function handleNetworkError(error, status) {
-  console.log("handleNetworkError", error);
-  if (status === 409 && error.code === "23505") {
-    return;
-  }
-  //managed_window.open(chrome.runtime.getURL(`popup.html?status=${status}`));
-}
-
-
-
-// //TODO: check sender
-// chrome.runtime.onMessage.addListener(async (message, sender, sendResponse)=>{
-//   if (message.event==='popup_activated'){
-
-//     const {data, error} = await extensionSendSpotlight()
-//     chrome.runtime.sendMessage(
-//       {event:'popup_activated_response', data, error}
-//       )
-//   }
-// }
-// )
-
-//   function(request, sender, sendResponse) {
-
-//     console.log(request)
-//   });
