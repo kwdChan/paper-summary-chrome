@@ -15,10 +15,6 @@
     "service_worker": "background.js"
   },
 
-  "action": {
-    "default_title": "Review Express",
-    "default_popup": "popup.html"
-  },
   "permissions": [
     "storage",
     "contextMenus",

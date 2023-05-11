@@ -8,6 +8,8 @@ chrome.runtime.onInstalled.addListener(() => {
     title: 'Summarise the selected',
     contexts: ['selection'],
   });
+  
+
 });
 
 chrome.contextMenus.onClicked.addListener(async function (info, tab) {
