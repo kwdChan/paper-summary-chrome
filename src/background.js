@@ -8,7 +8,7 @@ chrome.runtime.onInstalled.addListener(() => {
     title: 'Summarise the selected',
     contexts: ['selection'],
   });
-  
+
 
 });
 
@@ -127,7 +127,11 @@ function handleNetworkError(error, status) {
   if (status === 409 && error.code === "23505") {
     return;
   }
+  if (status === 406) {
 
+    managed_window.open(chrome.runtime.getURL(`popup.html?status=${"Cold start issue: please try again"}`));
+    return;
+  }
   // 403: row level security error (no auth)
   // TODO: send a message to popup.js to show error message
 
