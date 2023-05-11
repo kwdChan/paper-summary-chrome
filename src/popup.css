@@ -15,8 +15,7 @@ html {
 }
 
 body {
-  width: 600px;
-  height: 580px;
+  height: 100vh;
 }
 
 .app {
@@ -36,56 +35,4 @@ body {
   margin: 0;
 
 
-}
-
-
-
-
-label {
-  font-size: 1.2rem;
-  margin: 1rem;
-}
-
-#username {
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  margin-top: 0.5rem;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-#password {
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  margin-top: 0.5rem;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-#signup-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.2rem;
-  background-color: #4caf50;
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-#signin-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.2rem;
-  background-color: #2512d4b4;
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-#signup-button:hover {
-  background-color: #3e8e41;
 }

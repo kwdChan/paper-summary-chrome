@@ -12,20 +12,6 @@ export const storageWrapper = {
   removeItem: async (key) => chrome.storage.local.remove(key),
 };
 
-export async function getClient() {
-  const client = createClient(SUPABASE_URL, SUPABASE_API_KEY, {
-    auth: { storage: storageWrapper },
-  });
-  const {
-    data:{user} ,
-  } = await client.auth.getUser();
-
-  console.log("getClient:user", user);
-  console.log("getClient:client", client);
-  return { client, user };
-
-}
-
 class MySupabaseClient  {
 
   constructor() {
@@ -34,16 +20,28 @@ class MySupabaseClient  {
     })
   }
 
+
+  async setSession(session){
+    console.log(session)
+    await this.client.auth.setSession(session)
+
+    const {data , error} = await this.client.auth.refreshSession();
+
+    console.log("setSession", data)
+    console.log("setSession", error)
+  }
+
   signIn (email, password) {
     return this.client.auth.signInWithPassword({ email, password });
   }
 
   async newHighlight ({article_digest, digest, text}) {
-    const user = await this.getUser()
+    const {user, error} = await this.getUser()
 
     if (!user){
       return {data:null, errer:'no user'}
     }
+    console.log(user)
     const res = await this.client.from('highlight').insert({article_digest, digest, text, user_id: user.id})
     console.log('newHighlight', res)
 
@@ -51,9 +49,10 @@ class MySupabaseClient  {
   }
 
   async newArticle ({source, digest, title}) {
-    const user = await this.getUser()
+    const {user, error} = await this.getUser()
 
     if (!user){return {data: null}}
+    console.log(user)
     const res = await this.client.from('article').insert({ digest, source, title, user_id: user.id})
     console.log('newArticle', res)
     return res
@@ -61,13 +60,25 @@ class MySupabaseClient  {
 
   async getUser(){
     if (this.user) {
-      return this.user
+      console.log("getUser", this.user)
+      return {user: this.user, error: null}
     }
     const {data , error} = await this.client.auth.refreshSession();
-    return data.user
+    console.log("getUser", data)
+    console.log("getUser", error)
+    if (data){
+      this.user = data.user
+      return {user: this.user, error: null}
+    }
+    else{
+      return {user: null, error: error}
+    }
+
   }
 
   async getRefreshSession () {
+
+    // this return the unexpired session immediately without checking if it's valid
     return await this.client.auth.getSession()
   }
 

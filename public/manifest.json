@@ -33,6 +33,12 @@
         "chromeos": "Ctrl+Shift+F",
         "linux": "Ctrl+Shift+F"
       }
+    },
+    "summarise": {
+      "description": "Summarise it!",
+      "suggested_key": {
+        "default": "Ctrl+Shift+S"
+      }
     }
 
 
@@ -48,5 +54,10 @@
         "contentScript.js"
       ]
     }
-  ]
+  ],
+  "externally_connectable": {
+    "matches": ["http://localhost:3000/*","http://kawac.ddns.net:23073/*"]
+  }
+
+
 }

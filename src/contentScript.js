@@ -12,8 +12,29 @@ import { webURL } from './vars';
 // For more information on Content Scripts,
 // See https://developer.chrome.com/extensions/content_scripts
 
+const currentUrl = window.location.origin;
+console.log(currentUrl); // Output: The URL of the current page
+
+// //window.postMessage({ message: 'Hello from content script' }, '*');
+// window.addEventListener('message', (event) => {
+//   console.log(event.data); // Output: Message from the Next.js application
+
+//   // Check if the message is from the Next.js application
+//   if (event.data.from === 'nextjs') {
+//     console.log(event.data.message); // Output: Message from the Next.js application
+//   }
+// });
+
+
+if (currentUrl == webURL) {
+  console.log(currentUrl.data)
+  window.postMessage({ message: 'Hello from contecontentcontentcontentcontentnt script' }, '*');
+
+}
+
+
 // Log `title` of current active web page
-const pageTitle = document.head.getElementsByTagName('title')[0].innerHTML;
+const pageTitle = document.head.getElementsByTagName('title')[0]?.innerHTML || "";
 
 console.log(
   `Page title is: '${pageTitle}' - evaluated by Chrome extension's 'contentScript.js' file`

@@ -6,46 +6,76 @@ import { getClient, supabaseClient } from './supabase.js';
 console.log(webURL);
 
 (async function () {
-  await chrome.runtime.sendMessage({event:'popup_activated'})
+  const { article_digest, highlight_digest, error } = parseUrlQueries();
+  
+  if (article_digest) {
+    showIframe(
+      `/article/${article_digest}?highlight_digest=${highlight_digest}`
+    );
+  }
 
+  if (error) {
+    showIframe(`/signin`);
+  }
+
+  //await chrome.runtime.sendMessage({event:'popup_activated'})
+  //console.log(chrome.runtime.getURL('popup.html'))
 })();
 
+function parseUrlQueries() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryParams = {};
+  console.log(urlParams);
+  console.log(window.location.search);
+
+  for (const [key, value] of urlParams.entries()) {
+    queryParams[key] = value;
+  }
+
+  return queryParams;
+}
 
 // Add event listener to receive messages from child frames
-window.addEventListener("message", receiveMessage, false);
+window.addEventListener('message', receiveMessage, false);
 
 // Receive message from child frame
-function receiveMessage({origin, data, error}) {
-  if (data.message=='signout'){
+async function receiveMessage({ origin, data, error }) {
+  if (data.message == 'signin') {
+    console.log(data);
+    if (data.payload.data) {
+      await supabaseClient.setSession(data.payload.data.session);
+      showIframe(`/article`);
+    } else {
+      showIframe(`/signin`);
+    }
+  }
+
+  console.log('popup', origin, data, error);
+  if (data.message == 'signout') {
     supabaseClient.signout();
-    hideIframe();
-    showForm();
+    showIframe(`/signin`);
   }
 }
 
-
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  const {event, data, error } = message;
-  console.log('popup', event, data, error)
+  const { event, data, error } = message;
+  console.log('popup', event, data, error);
   if (event === 'popup_activated_response') {
-
-    if (data){
-      const query = `/${data.articleDigest}?highlight_digest=${data.highlightDigest}`
-      console.log('query', query)
+    if (data) {
+      const query = `/${data.articleDigest}?highlight_digest=${data.highlightDigest}`;
+      console.log('query', query);
       showIframe('/article' + query);
-    } else if (error=='no user'){
+    } else if (error == 'no user') {
       showForm();
-    }
-    else{
-      console.log(error)
+    } else {
+      console.log(error);
       showError(error);
     }
   }
 });
 
-function hideIframe(){
-  document.getElementById('webapp').style.display = 'none'
-
+function hideIframe() {
+  document.getElementById('webapp').style.display = 'none';
 }
 
 function showIframe(route = '/article') {
@@ -61,46 +91,10 @@ function showIframe(route = '/article') {
 
   // Append the iframe to the container element
   webapp.style.display = 'block';
-
 }
-
 
 function showError(text) {
   //TODO
   const errorMsg = document.getElementById('error-msg');
   errorMsg.style.display = 'block';
-}
-
-
-function showForm() {
-  const form = document.getElementById('signin-form');
-  //const button = document.getElementById('signin-button');
-  const signupButton = document.getElementById('signup-button');
-
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-
-  signupButton.addEventListener('click', () => {
-    form.style.display = 'none';
-    showIframe('/signup');
-  });
-
-  form.style.display = 'block';
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const username = usernameInput.value;
-    const password = passwordInput.value;
-
-    const {data, error} = await supabaseClient.signIn(username, password)
-
-    if (!error) {
-      form.style.display = 'none';
-      showIframe();
-    }
-
-    usernameInput.value = '';
-    passwordInput.value = '';
-  });
 }
