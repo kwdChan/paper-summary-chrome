@@ -22,8 +22,7 @@
   "permissions": [
     "storage",
     "contextMenus",
-    "activeTab",
-    "windows"
+    "activeTab"
   ],
 
   "commands": {
