@@ -69,8 +69,10 @@ async function userTriggerCommand_summary(){
 async function extensionSendSpotlight() {
   let result;
   try {
+
     let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     let tabID = tabs[0].id;
+    //console.log('extensionSendSpotlight', 'tabID', tabID);
     result = await chrome.tabs.sendMessage(tabID, { message: 'selection' });
   } catch {
     console.log('extensionSendSpotlight', 'no tab');

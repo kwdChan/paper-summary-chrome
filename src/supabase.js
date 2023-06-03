@@ -22,13 +22,13 @@ class MySupabaseClient  {
 
 
   async setSession(session){
-    console.log(session)
+    //console.log(session)
     await this.client.auth.setSession(session)
 
     const {data , error} = await this.client.auth.refreshSession();
 
-    console.log("setSession", data)
-    console.log("setSession", error)
+    //console.log("setSession", data)
+    //console.log("setSession", error)
   }
 
   signIn (email, password) {
@@ -41,7 +41,7 @@ class MySupabaseClient  {
     if (!user){
       return {data:null, errer:'no user'}
     }
-    console.log(user)
+    //console.log(user)
     const res = await this.client.from('highlight').insert({article_digest, digest, text, user_id: user.id})
     console.log('newHighlight', res)
 
@@ -52,7 +52,7 @@ class MySupabaseClient  {
     const {user, error} = await this.getUser()
 
     if (!user){return {data: null}}
-    console.log(user)
+    //console.log(user)
     const res = await this.client.from('article').insert({ digest, source, title, user_id: user.id})
     console.log('newArticle', res)
     return res
