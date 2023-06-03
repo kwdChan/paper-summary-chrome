@@ -6,7 +6,6 @@ const common = require('./webpack.common.js');
 const PATHS = require('./paths');
 const webpack = require('webpack');
 
-
 // Merge webpack configuration files
 const config = (env, argv) =>
    merge(common, {
@@ -18,7 +17,7 @@ const config = (env, argv) =>
     devtool: argv.mode === 'production' ? false : 'source-map',
     plugins: [
       new webpack.DefinePlugin({
-        WEB_URL: (argv.mode === 'production') ? JSON.stringify("https://paper-summary.vercel.app"): JSON.stringify("http://localhost:3000"),
+        WEB_URL: (argv.mode === 'production') ? JSON.stringify("https://review-express.vercel.app"): JSON.stringify("http://localhost:3000"),
 
       })
     ]
