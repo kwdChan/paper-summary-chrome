@@ -78,25 +78,45 @@ async function userTriggerCommand_summary() {
       `${webURL}/article/${articleDigest}?highlight_digest=${highlightDigest}`,
     );
   } else if (error === "no tab") {
-    // let errorMsg = "Please reload the page and try again for fresh installations. <br> Note that PDFs and other non-html contents are not yet supported."
-    // managedWindow.open(`${webURL}?error=${errorMsg}`)
-  } else if (error === "parsing error") {
-    // let errorMsg = "Oops! Something went wrong. Please reload the page. <br> Note that PDFs and other non-html contents are not yet supported."
+    console.log("no tab");
+    let errorTitle = "Page not found"
+    let errorMsg = "Note that only webpages are supported. Local files and PDFs are not supported."
 
-    // // has user but cannot refresh session
-    // managedWindow.open((`${webURL}?error=${error}`))
+    managedWindow.open(
+      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+    );
+
+  } else if (error === "hashing error?") {
+    let errorTitle = "Error"
+    let errorMsg = "There may be unhandled characters. Note that PDFs and other non-html contents are not yet supported. "
+
+    managedWindow.open(
+      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+    );
   } else if (error === "content script error") {
-    // let errorMsg = "Oops! Something went wrong. Please reload the page. <br> Note that PDFs and other non-html contents are not yet supported."
+    let errorTitle = "Parsing error"
+    let errorMsg = "There may be unexpected characters. Note that PDFs and other non-html contents are not yet supported. "
 
-    // // has user but cannot refresh session
-    // managedWindow.open((`${webURL}?error=${error}`))
+    managedWindow.open(
+      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+    );
+
+  } else if (error === "Could not establish connection") {
+
+    let errorTitle = "Reload the page"
+    let errorMsg = "Please reload the page and try again for fresh installation and update. Note that only webpages are supported."
+
+    managedWindow.open(
+      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+    );
   }
 }
 
 type extensionSendSpotlightError =
   | "no tab"
-  | "parsing error"
-  | "content script error";
+  | "hashing error?"
+  | "content script error"
+  | "Could not establish connection";
 type extensionSendSpotlightData = {
   articleDigest: string;
   highlightDigest: string;
@@ -120,9 +140,17 @@ async function extensionSendSpotlight(): Promise<
       (await chrome.tabs.sendMessage(tabID, {
         message: "selection",
       }))! as unknown as SelectionResponse;
-  } catch {
-    console.log("extensionSendSpotlight", "content script error");
-    return { data: null, error: "content script error" };
+  } catch (error) {
+
+    if ((error as Error).message == "Could not establish connection. Receiving end does not exist."){
+
+      return { data: null, error: "Could not establish connection" };
+    }
+    else{
+
+      return { data: null, error: "content script error" };
+
+    }
   }
 
   // sending the spotlight and article to the server
@@ -154,7 +182,7 @@ async function extensionSendSpotlight(): Promise<
     return { data: { articleDigest, highlightDigest }, error: null };
   } catch (error) {
     console.log("extensionSendSpotlight: parsing erroring: ", error);
-    return { data: null, error: "parsing error" };
+    return { data: null, error: "hashing error?" };
   }
 }
 
