@@ -12,35 +12,12 @@ import { webURL } from './vars';
 // For more information on Content Scripts,
 // See https://developer.chrome.com/extensions/content_scripts
 
-const currentUrl = window.location.origin;
-console.log(currentUrl); // Output: The URL of the current page
 
-// //window.postMessage({ message: 'Hello from content script' }, '*');
-// window.addEventListener('message', (event) => {
-//   console.log(event.data); // Output: Message from the Next.js application
-
-//   // Check if the message is from the Next.js application
-//   if (event.data.from === 'nextjs') {
-//     console.log(event.data.message); // Output: Message from the Next.js application
-//   }
-// });
+// // Log `title` of current active web page
+// const pageTitle = document.head.getElementsByTagName('title')[0]?.innerHTML || "";
 
 
-if (currentUrl == webURL) {
-  console.log(currentUrl.data)
-  window.postMessage({ message: 'Hello from contecontentcontentcontentcontentnt script' }, '*');
-
-}
-
-
-// Log `title` of current active web page
-const pageTitle = document.head.getElementsByTagName('title')[0]?.innerHTML || "";
-
-console.log(
-  `Page title is: '${pageTitle}' - evaluated by Chrome extension's 'contentScript.js' file`
-);
-
-function getUnnestedContents(element, contentTags) {
+function getUnnestedContents(element:Element|Document, contentTags:string[]):Element[] {
   if (!element) {
     return [];
   }
@@ -48,7 +25,9 @@ function getUnnestedContents(element, contentTags) {
   const noNestedContent = !element.querySelector(contentTags.join(','));
 
   if (noNestedContent) {
-    const isContent = contentTags.includes(element.tagName.toLowerCase());
+    if (element instanceof Document) throw new Error('Document should get to this point');
+
+    const isContent = contentTags.includes(element.tagName!.toLowerCase());
 
     if (isContent) {
       return [element];
@@ -66,11 +45,11 @@ function getUnnestedContents(element, contentTags) {
   return contents;
 }
 
-function segmentBy(elementList, tagOrder, segmentByTag) {
+function segmentBy(elementList:any, tagOrder:string[], segmentByTag:string) {
   const segmentTagIndex = tagOrder.indexOf(segmentByTag);
 
   const allSegments = [];
-  let newSegment = [];
+  let newSegment:any = [];
   for (const e of elementList) {
     const eTagOrder = tagOrder.indexOf(e[0]);
     if (eTagOrder > segmentTagIndex) {
@@ -87,7 +66,7 @@ function segmentBy(elementList, tagOrder, segmentByTag) {
   return allSegments;
 }
 
-function asPrompt(segment) {
+function asPrompt(segment:[string, string]) {
   let prompt = '';
   for (const eachTag of segment) {
     prompt += `<${eachTag[0]}> ${eachTag[1]} </${eachTag[0]}> \n\n`;
@@ -102,7 +81,7 @@ function segmentHtmlOnThisDocument(
   const unnestedContentElements = getUnnestedContents(document, contentTags);
   const tagAndText = unnestedContentElements.map((e) => [
     e.tagName.toLowerCase(),
-    e.textContent.replace('\xa0', ' ').replace('\u200b', ''),
+    e.textContent?.replace('\xa0', ' ').replace('\u200b', '') || '',
   ]);
 
   const segments = segmentBy(tagAndText, contentTags, 'h3');
@@ -123,7 +102,7 @@ function getContentList() {
     'div',
     'article',
   ];
-  let contentList = [];
+  let contentList:string[] = [];
   tags.forEach((tag) => {
     let contents = document.getElementsByTagName(tag);
     for (var i = 0; i < contents.length; i++) {
@@ -134,12 +113,18 @@ function getContentList() {
 }
 // send the article to the server if it exists. send only the webpage identifier and highlight otherwise
 function getArticle() {
+  // TODO: it works so i don't wanna touch it for now
+
+  // @ts-ignore
   let articles = document.getElementsByTagName(['article']);
+
   // Loop through the HTMLCollection and compare the textContent of each element
   let longestElement = null;
   for (var i = 0; i < articles.length; i++) {
     if (
+
       !longestElement ||
+      // @ts-ignore
       articles[i].textContent.length > longestElement.textContent.length
     ) {
       longestElement = articles[i];
@@ -149,15 +134,15 @@ function getArticle() {
 }
 
 function getCitationData() {
-  const citationMetaTags = document.querySelectorAll('meta[name^="citation_"]');
+  const citationMetaTags = document.querySelectorAll<HTMLMetaElement>('meta[name^="citation_"]');
 
-  let citationDataList = [];
+  let citationDataList:Array<{ name:string, content: string }> = [];
   citationMetaTags.forEach((e) => {
     citationDataList.push({ name: e.name, content: e.content });
   });
   return citationDataList;
 }
-function getMetadata(citationDataList) {
+function getMetadata(citationDataList:Array<{ name:string, content: string }>) {
   /*
 
   1. doi
@@ -181,68 +166,6 @@ function getMetadata(citationDataList) {
 }
 
 
-function createSidebar() {
-  const sidebar = document.createElement('div');
-  sidebar.id = 'my-sidebar';
-  sidebar.style.cssText = `
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 400px;
-    height: 100%;
-    background-color: #f0f0f0;
-    border-right: 1px solid #ccc;
-    overflow: auto;
-    z-index: 9999;
-    padding: 10px;
-    box-sizing: border-box;
-  `;
-  const webapp = document.createElement('iframe');
-  webapp.src = webURL
-
-  webapp.style.cssText = `
-  width: 100%;
-  height: 100%;
-  border: 0;
-  overflow: hidden;
-`;
-  sidebar.appendChild(webapp)
-
-  document.body.appendChild(sidebar);
-
-
-  const removeSidebar = adjustMainContent(sidebar.offsetWidth);
-
-
-
-}
-
-function adjustMainContent(sidebarWidth) {
-  const originalBodyMarginRight = document.body.style.marginRight || '';
-  document.body.style.marginRight = `${sidebarWidth}px`;
-
-  // Add a cleanup function to remove the sidebar and restore the original margin
-  const removeSidebar = () => {
-    const sidebar = document.getElementById('my-sidebar');
-    if (sidebar) {
-      sidebar.remove();
-      document.body.style.marginRight = originalBodyMarginRight;
-      window.removeEventListener('unload', removeSidebar);
-    }
-  };
-
-  // Remove the sidebar and restore the original margin when the page is unloaded
-  window.addEventListener('unload', removeSidebar);
-  return removeSidebar
-}
-
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'createSidebar') {
-    //createSidebar();
-  }
-});
-
 // Listen for messages
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.message == 'selection') {
@@ -254,7 +177,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       : { idType: 'title', id: metadata.title }; //{idType:<'doi'|'citation_title'|'webpage_title'>,'id':string}
 
     const article = getArticle()?.outerHTML.toString();
-    const highlighted = window.getSelection().toString();
+    const highlighted = window!.getSelection()!.toString();
     const contentList = getContentList();
 
     sendResponse({
@@ -283,12 +206,34 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 // Listen for message
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'COUNT') {
-    console.log(`Current count is ${request.payload.count}`);
+  // console.log('request', request)
+  if ((request.message == 'addTrace') && (window.location.origin == webURL)){
+    addTrace()
   }
-
-  // Send an empty response
-  // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890
-  sendResponse({});
-  return true;
 });
+
+function addTrace() {
+  console.log('adding trace')
+  if (document.querySelector("meta[name='review-express-extension']")) return;
+
+  var metadataElement = document.createElement('meta');
+  metadataElement.setAttribute('name', 'review-express-extension');
+  metadataElement.setAttribute('content', 'review-express-extension');
+  document.head.appendChild(metadataElement);
+}
+
+
+async function receiveMessage(event:MessageEvent<any>){
+  if (event.origin != webURL) return;
+  if (!['signin', 'signout'].includes(event.data.message)) return;
+  chrome.runtime.sendMessage({message:event.data.message, payload: event.data.payload});
+
+}
+
+(()=>{
+
+  if (window.location.origin != webURL) return;
+  window.addEventListener('message', receiveMessage, false);
+
+})()
+
