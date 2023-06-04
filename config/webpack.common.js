@@ -28,6 +28,11 @@ const common = {
   },
   module: {
     rules: [
+      // Check for TypeScript files
+      {
+        test: /\.ts$/,
+        use: ['ts-loader'],
+      },
       // Help webpack in understanding CSS files imported in .js files
       {
         test: /\.css$/,
@@ -48,6 +53,10 @@ const common = {
       },
     ],
   },
+  resolve: {
+    // Help webpack resolve these extensions in order
+    extensions: ['.ts', '.js'],
+  },
   plugins: [
     // Copy static assets from `public` folder to `build` folder
     new CopyWebpackPlugin({
@@ -66,3 +75,12 @@ const common = {
 };
 
 module.exports = common;
+hitecture overview
+
+A high-level explanation of the structure of a Chrome Extension.
+
+Published on Tuesday, September 18, 2012 • Updated on Tuesday, May 30, 2023
+
+Table of contents
+#Overview
+A Chrome extension is composed of different parts. This page describes the structure of an extension, the role each part plays, and how they work together. It does not describe the code-level details of how to write an extension.
