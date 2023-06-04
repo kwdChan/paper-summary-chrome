@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Review Express",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An GPT based AI summarisation tool with pre-engineered prompts designed for scientific papers. ",
 
   "icons": {
@@ -16,13 +16,13 @@
   },
 
   "action": {
-    "default_title": "Review Express"
+    "default_title": "Review Express",
+    "default_popup": "popup.html"
   },
 
   "permissions": [
     "storage",
-    "contextMenus",
-    "activeTab"
+    "contextMenus"
   ],
 
   "commands": {
