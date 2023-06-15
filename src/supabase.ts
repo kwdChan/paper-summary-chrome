@@ -65,7 +65,7 @@ class MySupabaseClient {
     const { user, error } = await this.getUser();
 
     if (!user) {
-      return { data: null, errer: "no user" };
+      return { data: null, errer: error, res:null };
     }
     //console.log(user)
     const res = await this.client.from("highlight").insert({
@@ -76,7 +76,7 @@ class MySupabaseClient {
     });
     console.log("newHighlight", res);
 
-    return res;
+    return { data: null, error: null, res: res };
   }
 
   async newArticle(
@@ -89,7 +89,7 @@ class MySupabaseClient {
 
     const { user, error } = await this.getUser();
 
-    if (!user) return { data: null, error: error };
+    if (!user) return { data: null, error: error, res: null };
 
     //console.log(user)
     const res = await this.client.from("article").insert({
@@ -99,7 +99,7 @@ class MySupabaseClient {
       user_id: user.id,
     });
     console.log("newArticle", res);
-    return res;
+    return { data: null, error: null, res: res };
   }
 
 
