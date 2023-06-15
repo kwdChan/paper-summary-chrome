@@ -17,7 +17,7 @@ const config = (env, argv) =>
     devtool: argv.mode === 'production' ? false : 'source-map',
     plugins: [
       new webpack.DefinePlugin({
-        WEB_URL: (argv.mode === 'production') ? JSON.stringify("https://review-express.vercel.app"): JSON.stringify("http://localhost:3000"),
+        WEB_URL: (argv.mode === 'production') ? JSON.stringify("https://review-express-v1.vercel.app"): JSON.stringify("http://localhost:3000"),
 
       })
     ]

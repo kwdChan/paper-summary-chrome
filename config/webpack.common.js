@@ -75,12 +75,3 @@ const common = {
 };
 
 module.exports = common;
-hitecture overview
-
-A high-level explanation of the structure of a Chrome Extension.
-
-Published on Tuesday, September 18, 2012 • Updated on Tuesday, May 30, 2023
-
-Table of contents
-#Overview
-A Chrome extension is composed of different parts. This page describes the structure of an extension, the role each part plays, and how they work together. It does not describe the code-level details of how to write an extension.
