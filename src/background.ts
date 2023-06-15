@@ -2,9 +2,21 @@
 import { supabaseClient } from "./supabase";
 import fnv from "fnv-plus";
 import { webURL } from "./vars";
+import { AuthError, PostgrestError } from "@supabase/supabase-js";
+
+
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason == "install") {
+    // This is a first install!
+
+    chrome.tabs.create({url: webURL + "/getting-started"});
+  }
+});
+
 
 // context menu
 chrome.runtime.onInstalled.addListener(() => {
+
   chrome.contextMenus.create({
     id: "summarise",
     title: "Summarise the selected",
@@ -26,7 +38,7 @@ chrome.runtime.onMessage.addListener(
 
         // login in the extension
         await supabaseClient.setSession(session);
-        managedWindow.open(`${webURL}/howToUse`);
+        managedWindow.open(`${webURL}/getting-started#how_to_use`);
 
         if (error) {
 
@@ -65,7 +77,7 @@ async function userTriggerCommand_summary() {
   const { user } = await supabaseClient.getUser();
   if (!user) {
     // let errorMsg = "Extension not logged in. <br> If the page is logged in, try logging out and logging in again."
-    managedWindow.open(`${webURL}/signin?extensionSignin=true`);
+    managedWindow.open(`${webURL}/sign-in/passwordless?extensionSignin=true`);
 
     // force the webpage to signout
     return;
@@ -83,7 +95,7 @@ async function userTriggerCommand_summary() {
     let errorMsg = "Note that only webpages are supported. Local files and PDFs are not supported."
 
     managedWindow.open(
-      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+      `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
 
   } else if (error === "hashing error?") {
@@ -91,14 +103,14 @@ async function userTriggerCommand_summary() {
     let errorMsg = "There may be unhandled characters. Note that PDFs and other non-html contents are not yet supported. "
 
     managedWindow.open(
-      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+      `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
   } else if (error === "content script error") {
     let errorTitle = "Parsing error"
     let errorMsg = "There may be unexpected characters. Note that PDFs and other non-html contents are not yet supported. "
 
     managedWindow.open(
-      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+      `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
 
   } else if (error === "Could not establish connection") {
@@ -107,7 +119,7 @@ async function userTriggerCommand_summary() {
     let errorMsg = "Please reload the page and try again for fresh installation and update. Note that only webpages are supported."
 
     managedWindow.open(
-      `${webURL}/howToUse?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
+      `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
   }
 }
@@ -167,6 +179,11 @@ async function extensionSendSpotlight(): Promise<
       article_digest: articleDigest,
       digest: highlightDigest,
       text: result.highlighted,
+    }).then(({data, error, res}) => {
+      if (res?.error){
+        handleNetworkError(res?.error, res?.status);
+        return
+      }
     });
 
     supabaseClient
@@ -175,8 +192,11 @@ async function extensionSendSpotlight(): Promise<
         source: htmlTagsAsString,
         title: result.metadata.title,
       })
-      .then(({ data, error }) => {
-        handleNetworkError(error, null);
+      .then(({data, error, res}) => {
+        if (res?.error){
+          handleNetworkError(res?.error, res?.status);
+          return
+        }
       });
 
     return { data: { articleDigest, highlightDigest }, error: null };
@@ -186,8 +206,9 @@ async function extensionSendSpotlight(): Promise<
   }
 }
 
-function handleNetworkError(error: any, status: unknown) {
-  console.log("handleNetworkError", error);
+function handleNetworkError(error: PostgrestError, status: number | null ) {
+  console.log("error", error);
+  if (!error) return;
 
   //this is database replication error, ignore it
   if (status === 409 && error.code === "23505") {
@@ -195,21 +216,22 @@ function handleNetworkError(error: any, status: unknown) {
   }
   if (status === 406) {
     managedWindow.open(
-      `${webURL}?error=${"Cold start issue: please try again"}`,
+      `${webURL}/article?errorTitle=Cold start error&errorMessage=${"please try again"}`,
     );
     return;
+  } else {
+
+    managedWindow.addQuery(`errorTitle=Unanticipated Error. &errorMessage=${error.message}`);
   }
   // 403: row level security error (no auth)
-  // TODO: send a message to popup.js to show error message
-
-  //managedWindow.open((`popup.html?status=${status}`));
 }
 
 class ManagedWindow {
   opened: null | chrome.windows.Window;
-
+  currentURL: string | null;
   constructor() {
     this.opened = null;
+    this.currentURL = null;
   }
 
   async open(url: string) {
@@ -219,12 +241,21 @@ class ManagedWindow {
       await this.changeURL(url);
 
     } catch {
+      this.currentURL = url;
       this.opened = await this.actuallyOpeningAWindow(url);
     }
 
     this.sendMessage({ message: "addTrace" });
     chrome.tabs.onUpdated.addListener(this.instructAddTrace.bind(this));
   }
+
+  async addQuery(query: string) {
+
+    const sym = this.currentURL!.includes("?") ? "&" : "?";
+    await this.changeURL(`${this.currentURL!.split("#")[0]}${sym}${query}`);
+
+  }
+
 
   async actuallyOpeningAWindow(url: string) {
     this.opened = await chrome.windows.create({
@@ -236,7 +267,10 @@ class ManagedWindow {
 
     return this.opened;
   }
+
   changeURL(url: string) {
+    this.currentURL = url;
+
     return chrome.tabs.update(this.opened!.tabs![0].id!, { url: url });
   }
   instructAddTrace(tabId: any, changeInfo: any, tab: any) {
