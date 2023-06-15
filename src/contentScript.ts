@@ -205,23 +205,22 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 });
 
 // Listen for message
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  // console.log('request', request)
-  if ((request.message == 'addTrace') && (window.location.origin == webURL)){
-    addTrace()
-  }
-});
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+//   // console.log('request', request)
+//   if ((request.message == 'addTrace') && (window.location.origin == webURL)){
+//     addTrace()
+//   }
+// });
 
 function addTrace() {
-  console.log('adding trace')
+  if (window.location.origin != webURL) return;
   if (document.querySelector("meta[name='review-express-extension']")) return;
-
   var metadataElement = document.createElement('meta');
   metadataElement.setAttribute('name', 'review-express-extension');
   metadataElement.setAttribute('content', 'review-express-extension');
   document.head.appendChild(metadataElement);
 }
-
+addTrace()
 
 async function receiveMessage(event:MessageEvent<any>){
   if (event.origin != webURL) return;
