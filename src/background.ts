@@ -4,19 +4,16 @@ import fnv from "fnv-plus";
 import { webURL } from "./vars";
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
 
-
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason == "install") {
     // This is a first install!
 
-    chrome.tabs.create({url: webURL + "/getting-started"});
+    chrome.tabs.create({ url: webURL + "/getting-started" });
   }
 });
 
-
 // context menu
 chrome.runtime.onInstalled.addListener(() => {
-
   chrome.contextMenus.create({
     id: "summarise",
     title: "Summarise the selected",
@@ -32,7 +29,6 @@ chrome.runtime.onMessage.addListener(
       // sign in the extension
 
       if (message.payload.data) {
-
         // error handling
         const { session, error } = message.payload.data;
 
@@ -41,14 +37,12 @@ chrome.runtime.onMessage.addListener(
         managedWindow.open(`${webURL}/getting-started#how_to_use`);
 
         if (error) {
-
           // this error isn't ready possible
 
-          console.warn('receiveMessage: signin failed')
+          console.warn("receiveMessage: signin failed");
         }
-
       } else {
-        console.warn('receiveMessage:  message error')
+        console.warn("receiveMessage:  message error");
         // TODO: error message page
       }
     }
@@ -91,32 +85,33 @@ async function userTriggerCommand_summary() {
     );
   } else if (error === "no tab") {
     console.log("no tab");
-    let errorTitle = "Page not found"
-    let errorMsg = "Note that only webpages are supported. Local files and PDFs are not supported."
+    let errorTitle = "Page not found";
+    let errorMsg =
+      "Note that only webpages are supported. Local files and PDFs are not supported.";
 
     managedWindow.open(
       `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
-
   } else if (error === "hashing error?") {
-    let errorTitle = "Error"
-    let errorMsg = "There may be unhandled characters. Note that PDFs and other non-html contents are not yet supported. "
+    let errorTitle = "Error";
+    let errorMsg =
+      "There may be unhandled characters. Note that PDFs and other non-html contents are not yet supported. ";
 
     managedWindow.open(
       `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
   } else if (error === "content script error") {
-    let errorTitle = "Parsing error"
-    let errorMsg = "There may be unexpected characters. Note that PDFs and other non-html contents are not yet supported. "
+    let errorTitle = "Parsing error";
+    let errorMsg =
+      "There may be unexpected characters. Note that PDFs and other non-html contents are not yet supported. ";
 
     managedWindow.open(
       `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
     );
-
   } else if (error === "Could not establish connection") {
-
-    let errorTitle = "Reload the page"
-    let errorMsg = "Please reload the page and try again for fresh installation and update. Note that only webpages are supported."
+    let errorTitle = "Reload the page";
+    let errorMsg =
+      "Please reload the page and try again for fresh installation and update. Note that only webpages are supported.";
 
     managedWindow.open(
       `${webURL}/getting-started?errorTitle=${errorTitle}&errorMessage=${errorMsg}`,
@@ -148,26 +143,25 @@ async function extensionSendSpotlight(): Promise<
 
   try {
     // throw an error in case of void
-    result =
-      (await chrome.tabs.sendMessage(tabID, {
-        message: "selection",
-      }))! as unknown as SelectionResponse;
+    result = (await chrome.tabs.sendMessage(tabID, {
+      message: "selection",
+    }))! as unknown as SelectionResponse;
   } catch (error) {
-
-    if ((error as Error).message == "Could not establish connection. Receiving end does not exist."){
-
+    if (
+      (error as Error).message ==
+        "Could not establish connection. Receiving end does not exist."
+    ) {
       return { data: null, error: "Could not establish connection" };
-    }
-    else{
-
+    } else {
       return { data: null, error: "content script error" };
-
     }
   }
 
   // sending the spotlight and article to the server
   try {
     const htmlTagsAsString = JSON.stringify(result.contentHTMLTags);
+    //@ts-ignore
+    console.log(result.highlighted.isWellFormed())
 
     const articleDigest = fnv.hash(htmlTagsAsString, 64).str();
     const highlightDigest = fnv.hash(result.highlighted, 64).str();
@@ -178,11 +172,13 @@ async function extensionSendSpotlight(): Promise<
     supabaseClient.newHighlight({
       article_digest: articleDigest,
       digest: highlightDigest,
-      text: result.highlighted,
-    }).then(({data, error, res}) => {
-      if (res?.error){
+
+      //@ts-ignore
+      text: result.highlighted.toWellFormed(),
+    }).then(({ data, error, res }) => {
+      if (res?.error) {
         handleNetworkError(res?.error, res?.status);
-        return
+        return;
       }
     });
 
@@ -192,10 +188,10 @@ async function extensionSendSpotlight(): Promise<
         source: htmlTagsAsString,
         title: result.metadata.title,
       })
-      .then(({data, error, res}) => {
-        if (res?.error){
+      .then(({ data, error, res }) => {
+        if (res?.error) {
           handleNetworkError(res?.error, res?.status);
-          return
+          return;
         }
       });
 
@@ -206,7 +202,7 @@ async function extensionSendSpotlight(): Promise<
   }
 }
 
-function handleNetworkError(error: PostgrestError, status: number | null ) {
+function handleNetworkError(error: PostgrestError, status: number | null) {
   console.log("error", error);
   if (!error) return;
 
@@ -220,8 +216,9 @@ function handleNetworkError(error: PostgrestError, status: number | null ) {
     );
     return;
   } else {
-
-    managedWindow.addQuery(`errorTitle=Unanticipated Error. &errorMessage=${error.message}`);
+    managedWindow.addQuery(
+      `errorTitle=Unanticipated Error. &errorMessage=${error.message}`,
+    );
   }
   // 403: row level security error (no auth)
 }
@@ -235,11 +232,9 @@ class ManagedWindow {
   }
 
   async open(url: string) {
-    try{
-
+    try {
       await this.focusTheWindow();
       await this.changeURL(url);
-
     } catch {
       this.currentURL = url;
       this.opened = await this.actuallyOpeningAWindow(url);
@@ -250,12 +245,9 @@ class ManagedWindow {
   }
 
   async addQuery(query: string) {
-
     const sym = this.currentURL!.includes("?") ? "&" : "?";
     await this.changeURL(`${this.currentURL!.split("#")[0]}${sym}${query}`);
-
   }
-
 
   async actuallyOpeningAWindow(url: string) {
     this.opened = await chrome.windows.create({
@@ -278,12 +270,12 @@ class ManagedWindow {
       return this.sendMessage({ message: "addTrace" });
     }
   }
-  sendMessage(message: any, attempt: number=0) {
-    try{
+  sendMessage(message: any, attempt: number = 0) {
+    try {
       return chrome.tabs.sendMessage(this.opened!.tabs![0].id!, message);
     } catch {
-      console.log("sendMessage", "error", attempt)
-      setTimeout(() => this.sendMessage(message, attempt+1), 100);
+      console.log("sendMessage", "error", attempt);
+      setTimeout(() => this.sendMessage(message, attempt + 1), 100);
     }
   }
 
