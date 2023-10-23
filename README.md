@@ -1,24 +1,6 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Paper Summary Chrome
+# <img src="public/icons/icon_48.png" width="45" align="left"> Review Express (Extension Code)
 
-My Chrome Extension
+This repo contains the browser extension code for [Review Express](https://chrome.google.com/webstore/detail/review-express/bdmdngoamjhncjgclcfppjjgfihdgbfp). The user interface is in [another repo](https://github.com/kwdChan/paper-summary-frontend). 
 
-## Features
+The project was originally named "Paper Summary" hence the repo name paper-summary-chrome. 
 
-- Feature 1
-- Feature 2
-
-## Install
-
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
-
-## Contribution
-
-Suggestions and pull requests are welcomed!.
-
----
-
-This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
-
-## dev
-
-`npm run watch`
